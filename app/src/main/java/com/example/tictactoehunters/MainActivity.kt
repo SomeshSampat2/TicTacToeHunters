@@ -22,13 +22,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.tictactoehunters.ui.theme.TictacToeHuntersTheme
-import kotlinx.coroutines.delay
+import android.app.Activity
+import androidx.compose.animation.ExperimentalAnimationApi
 
+@OptIn(ExperimentalAnimationApi::class)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,28 +41,37 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    TicTacToeGame()
+                    GameApp()
                 }
             }
         }
     }
 }
 
-data class WinningLine(
-    val start: Offset,
-    val end: Offset,
-    val cells: List<Int>
-)
+@Composable
+fun GameApp() {
+    var currentScreen by remember { mutableStateOf("menu") }
+    
+    Crossfade(
+        targetState = currentScreen,
+        animationSpec = tween(300)
+    ) { screen ->
+        when (screen) {
+            "menu" -> MenuScreen(
+                onPlayClick = { currentScreen = "game" }
+            )
+            "game" -> TicTacToeGame(
+                onBackToMenu = { currentScreen = "menu" }
+            )
+        }
+    }
+}
 
 @Composable
-fun TicTacToeGame() {
-    var gameState by remember { mutableStateOf(List(9) { "" }) }
-    var currentPlayer by remember { mutableStateOf("X") }
-    var winner by remember { mutableStateOf<String?>(null) }
-    var gameOver by remember { mutableStateOf(false) }
-    var winningCells by remember { mutableStateOf<List<Int>?>(null) }
+fun MenuScreen(onPlayClick: () -> Unit) {
+    val context = LocalContext.current
     
-    // Animation for the game title
+    // Animation for the title
     val titleScale = remember { Animatable(0.8f) }
     LaunchedEffect(Unit) {
         titleScale.animateTo(
@@ -72,6 +83,88 @@ fun TicTacToeGame() {
         )
     }
 
+    // Button hover animation
+    var playButtonScale by remember { mutableStateOf(1f) }
+    var quitButtonScale by remember { mutableStateOf(1f) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // Title with glow effect
+        Box(
+            modifier = Modifier
+                .scale(titleScale.value)
+                .padding(bottom = 64.dp)
+        ) {
+            Text(
+                text = "Tic Tac Toe",
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .blur(radius = 4.dp)
+                    .alpha(0.3f)
+            )
+            Text(
+                text = "Tic Tac Toe",
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        // Play button
+        Button(
+            onClick = onPlayClick,
+            modifier = Modifier
+                .scale(playButtonScale)
+                .width(200.dp)
+                .padding(vertical = 8.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Text(
+                text = "Play",
+                fontSize = 24.sp,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Quit button
+        Button(
+            onClick = { (context as? Activity)?.finish() },
+            modifier = Modifier
+                .scale(quitButtonScale)
+                .width(200.dp)
+                .padding(vertical = 8.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.error
+            )
+        ) {
+            Text(
+                text = "Quit",
+                fontSize = 24.sp,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun TicTacToeGame(onBackToMenu: () -> Unit) {
+    var gameState by remember { mutableStateOf(List(9) { "" }) }
+    var currentPlayer by remember { mutableStateOf("X") }
+    var winner by remember { mutableStateOf<String?>(null) }
+    var gameOver by remember { mutableStateOf(false) }
+    var winningCells by remember { mutableStateOf<List<Int>?>(null) }
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -79,11 +172,22 @@ fun TicTacToeGame() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Animated title with glow effect
-        Box(
+        // Back to Menu button
+        Button(
+            onClick = onBackToMenu,
             modifier = Modifier
-                .scale(titleScale.value)
-                .padding(bottom = 32.dp)
+                .align(Alignment.Start)
+                .padding(bottom = 16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary
+            )
+        ) {
+            Text("Back to Menu")
+        }
+
+        // Game status text with glow effect
+        Box(
+            modifier = Modifier.padding(bottom = 32.dp)
         ) {
             Text(
                 text = if (winner != null) {
@@ -136,11 +240,8 @@ fun TicTacToeGame() {
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Animated reset button
-        var buttonScale by remember { mutableStateOf(1f) }
         Button(
             onClick = {
-                buttonScale = 0.8f
                 gameState = List(9) { "" }
                 currentPlayer = "X"
                 winner = null
@@ -150,9 +251,7 @@ fun TicTacToeGame() {
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary
             ),
-            modifier = Modifier
-                .scale(buttonScale)
-                .animateContentSize()
+            modifier = Modifier.animateContentSize()
         ) {
             Text(
                 text = "Reset Game",
