@@ -8,8 +8,11 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,9 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.tictactoehunters.ui.theme.TictacToeHuntersTheme
 import android.app.Activity
-import androidx.compose.animation.ExperimentalAnimationApi
 
-@OptIn(ExperimentalAnimationApi::class)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +52,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun GameApp() {
     var currentScreen by remember { mutableStateOf("menu") }
+    var gridSize by remember { mutableStateOf(3) }
     
     Crossfade(
         targetState = currentScreen,
@@ -58,9 +60,13 @@ fun GameApp() {
     ) { screen ->
         when (screen) {
             "menu" -> MenuScreen(
-                onPlayClick = { currentScreen = "game" }
+                onPlayClick = { size -> 
+                    gridSize = size
+                    currentScreen = "game" 
+                }
             )
             "game" -> TicTacToeGame(
+                gridSize = gridSize,
                 onBackToMenu = { currentScreen = "menu" }
             )
         }
@@ -68,10 +74,9 @@ fun GameApp() {
 }
 
 @Composable
-fun MenuScreen(onPlayClick: () -> Unit) {
+fun MenuScreen(onPlayClick: (Int) -> Unit) {
     val context = LocalContext.current
     
-    // Animation for the title
     val titleScale = remember { Animatable(0.8f) }
     LaunchedEffect(Unit) {
         titleScale.animateTo(
@@ -83,10 +88,6 @@ fun MenuScreen(onPlayClick: () -> Unit) {
         )
     }
 
-    // Button hover animation
-    var playButtonScale by remember { mutableStateOf(1f) }
-    var quitButtonScale by remember { mutableStateOf(1f) }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -94,7 +95,6 @@ fun MenuScreen(onPlayClick: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Title with glow effect
         Box(
             modifier = Modifier
                 .scale(titleScale.value)
@@ -117,40 +117,94 @@ fun MenuScreen(onPlayClick: () -> Unit) {
             )
         }
 
-        // Play button
-        Button(
-            onClick = onPlayClick,
+        Text(
+            text = "Choose Your Game Mode",
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+
+        Card(
             modifier = Modifier
-                .scale(playButtonScale)
-                .width(200.dp)
-                .padding(vertical = 8.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
+                .width(280.dp)
+                .padding(vertical = 8.dp)
+                .clickable { onPlayClick(3) },
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
             )
         ) {
-            Text(
-                text = "Play",
-                fontSize = 24.sp,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Classic Mode",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    text = "3×3",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Card(
+            modifier = Modifier
+                .width(280.dp)
+                .padding(vertical = 8.dp)
+                .clickable { onPlayClick(4) },
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Extended Mode",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    text = "4×4",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                )
+            }
+        }
 
-        // Quit button
+        Spacer(modifier = Modifier.height(32.dp))
+
         Button(
             onClick = { (context as? Activity)?.finish() },
             modifier = Modifier
-                .scale(quitButtonScale)
-                .width(200.dp)
+                .width(280.dp)
                 .padding(vertical = 8.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.error
-            )
+            ),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
         ) {
             Text(
-                text = "Quit",
-                fontSize = 24.sp,
+                text = "Exit Game",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
         }
@@ -158,106 +212,127 @@ fun MenuScreen(onPlayClick: () -> Unit) {
 }
 
 @Composable
-fun TicTacToeGame(onBackToMenu: () -> Unit) {
-    var gameState by remember { mutableStateOf(List(9) { "" }) }
+fun TicTacToeGame(gridSize: Int, onBackToMenu: () -> Unit) {
+    var gameState by remember { mutableStateOf(List(gridSize * gridSize) { "" }) }
     var currentPlayer by remember { mutableStateOf("X") }
     var winner by remember { mutableStateOf<String?>(null) }
     var gameOver by remember { mutableStateOf(false) }
     var winningCells by remember { mutableStateOf<List<Int>?>(null) }
     
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(16.dp)
     ) {
-        // Back to Menu button
+        // Back button at the top-left
         Button(
             onClick = onBackToMenu,
             modifier = Modifier
-                .align(Alignment.Start)
-                .padding(bottom = 16.dp),
+                .align(Alignment.TopStart)
+                .padding(top = 16.dp, bottom = 16.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondary
-            )
+                containerColor = MaterialTheme.colorScheme.secondaryContainer
+            ),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
         ) {
-            Text("Back to Menu")
-        }
-
-        // Game status text with glow effect
-        Box(
-            modifier = Modifier.padding(bottom = 32.dp)
-        ) {
-            Text(
-                text = if (winner != null) {
-                    if (winner == "Draw") "Game Draw!" else "Player $winner Wins!"
-                } else {
-                    "Player $currentPlayer's Turn"
-                },
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .blur(radius = 4.dp)
-                    .alpha(0.3f)
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Back to Menu",
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.size(24.dp)
             )
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = if (winner != null) {
-                    if (winner == "Draw") "Game Draw!" else "Player $winner Wins!"
-                } else {
-                    "Player $currentPlayer's Turn"
-                },
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                text = "Back to Menu",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
 
-        GameBoard(
-            gameState = gameState,
-            winningCells = winningCells,
-            onCellClick = { index ->
-                if (gameState[index].isEmpty() && !gameOver) {
-                    val newGameState = gameState.toMutableList()
-                    newGameState[index] = currentPlayer
-                    gameState = newGameState
-
-                    val result = checkWinner(gameState)
-                    winner = result?.first
-                    winningCells = result?.second
-                    if (winner != null) {
-                        gameOver = true
-                    } else if (!gameState.contains("")) {
-                        winner = "Draw"
-                        gameOver = true
+        // Game content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 80.dp), 
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier.padding(bottom = 32.dp)
+            ) {
+                Text(
+                    text = if (winner != null) {
+                        if (winner == "Draw") "Game Draw!" else "Player $winner Wins!"
                     } else {
-                        currentPlayer = if (currentPlayer == "X") "O" else "X"
+                        "Player $currentPlayer's Turn"
+                    },
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .blur(radius = 4.dp)
+                        .alpha(0.3f)
+                )
+                Text(
+                    text = if (winner != null) {
+                        if (winner == "Draw") "Game Draw!" else "Player $winner Wins!"
+                    } else {
+                        "Player $currentPlayer's Turn"
+                    },
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            GameBoard(
+                gameState = gameState,
+                gridSize = gridSize,
+                winningCells = winningCells,
+                onCellClick = { index ->
+                    if (gameState[index].isEmpty() && !gameOver) {
+                        val newGameState = gameState.toMutableList()
+                        newGameState[index] = currentPlayer
+                        gameState = newGameState
+
+                        val result = checkWinner(newGameState, gridSize)
+                        winner = result?.first
+                        winningCells = result?.second
+                        if (winner != null) {
+                            gameOver = true
+                        } else if (!gameState.contains("")) {
+                            winner = "Draw"
+                            gameOver = true
+                        } else {
+                            currentPlayer = if (currentPlayer == "X") "O" else "X"
+                        }
                     }
                 }
-            }
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = {
-                gameState = List(9) { "" }
-                currentPlayer = "X"
-                winner = null
-                gameOver = false
-                winningCells = null
-            },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            ),
-            modifier = Modifier.animateContentSize()
-        ) {
-            Text(
-                text = "Reset Game",
-                fontSize = 18.sp,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Button(
+                onClick = {
+                    gameState = List(gridSize * gridSize) { "" }
+                    currentPlayer = "X"
+                    winner = null
+                    gameOver = false
+                    winningCells = null
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),
+                modifier = Modifier.animateContentSize()
+            ) {
+                Text(
+                    text = "New Game",
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
         }
     }
 }
@@ -265,119 +340,75 @@ fun TicTacToeGame(onBackToMenu: () -> Unit) {
 @Composable
 fun GameBoard(
     gameState: List<String>,
+    gridSize: Int,
     winningCells: List<Int>?,
-    onCellClick: (Int) -> Unit
+    onCellClick: (Int) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val boardScale = remember { Animatable(0.8f) }
-    LaunchedEffect(Unit) {
-        boardScale.animateTo(
-            targetValue = 1f,
-            animationSpec = tween(
-                durationMillis = 500,
-                easing = EaseOutBack
-            )
-        )
-    }
-
-    // Strike line animation
-    val strikeLineProgress = remember { Animatable(0f) }
-    LaunchedEffect(winningCells) {
-        if (winningCells != null) {
-            strikeLineProgress.snapTo(0f)
-            strikeLineProgress.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(
-                    durationMillis = 500,
-                    easing = EaseOutExpo
-                )
-            )
-        }
-    }
-
-    Box {
-        Card(
-            modifier = Modifier
-                .aspectRatio(1f)
-                .padding(16.dp)
-                .scale(boardScale.value),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-        ) {
-            Column(
+    Column(
+        modifier = modifier
+            .padding(8.dp)
+            .aspectRatio(1f)
+    ) {
+        for (row in 0 until gridSize) {
+            Row(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp)
+                    .weight(1f)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                for (row in 0..2) {
-                    Row(
+                for (col in 0 until gridSize) {
+                    val index = row * gridSize + col
+                    GameCell(
+                        value = gameState[index],
+                        isWinning = winningCells?.contains(index) == true,
+                        onClick = { onCellClick(index) },
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxWidth()
-                    ) {
-                        for (col in 0..2) {
-                            val index = row * 3 + col
-                            GameCell(
-                                value = gameState[index],
-                                isWinning = winningCells?.contains(index) == true,
-                                onClick = { onCellClick(index) },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight()
-                                    .padding(4.dp)
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Draw strike line
-            if (winningCells != null) {
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val startCell = winningCells.first()
-                    val endCell = winningCells.last()
-                    
-                    val startRow = startCell / 3
-                    val startCol = startCell % 3
-                    val endRow = endCell / 3
-                    val endCol = endCell % 3
-
-                    val cellWidth = size.width / 3
-                    val cellHeight = size.height / 3
-
-                    val start = Offset(
-                        (startCol * cellWidth) + (cellWidth / 2),
-                        (startRow * cellHeight) + (cellHeight / 2)
-                    )
-                    val end = Offset(
-                        (endCol * cellWidth) + (cellWidth / 2),
-                        (endRow * cellHeight) + (cellHeight / 2)
-                    )
-
-                    val currentEnd = Offset(
-                        start.x + (end.x - start.x) * strikeLineProgress.value,
-                        start.y + (end.y - start.y) * strikeLineProgress.value
-                    )
-
-                    // Draw glow effect
-                    drawLine(
-                        color = Color.Yellow.copy(alpha = 0.3f),
-                        start = start,
-                        end = currentEnd,
-                        strokeWidth = 24f,
-                        cap = StrokeCap.Round
-                    )
-
-                    // Draw main line
-                    drawLine(
-                        color = Color.Yellow,
-                        start = start,
-                        end = currentEnd,
-                        strokeWidth = 8f,
-                        cap = StrokeCap.Round
+                            .aspectRatio(1f)
+                            .padding(4.dp)
                     )
                 }
             }
         }
     }
+}
+
+fun checkWinner(gameState: List<String>, gridSize: Int): Pair<String, List<Int>>? {
+    // Check rows
+    for (row in 0 until gridSize) {
+        val startIndex = row * gridSize
+        val rowIndices = (0 until gridSize).map { startIndex + it }
+        if (checkLine(gameState, rowIndices)) {
+            return gameState[startIndex] to rowIndices
+        }
+    }
+
+    // Check columns
+    for (col in 0 until gridSize) {
+        val colIndices = (0 until gridSize).map { it * gridSize + col }
+        if (checkLine(gameState, colIndices)) {
+            return gameState[col] to colIndices
+        }
+    }
+
+    // Check diagonals
+    val diagonal1 = (0 until gridSize).map { it * gridSize + it }
+    if (checkLine(gameState, diagonal1)) {
+        return gameState[0] to diagonal1
+    }
+
+    val diagonal2 = (0 until gridSize).map { it * gridSize + (gridSize - 1 - it) }
+    if (checkLine(gameState, diagonal2)) {
+        return gameState[gridSize - 1] to diagonal2
+    }
+
+    return null
+}
+
+fun checkLine(gameState: List<String>, indices: List<Int>): Boolean {
+    val firstValue = gameState[indices.first()]
+    return firstValue.isNotEmpty() && indices.all { gameState[it] == firstValue }
 }
 
 @Composable
@@ -391,7 +422,24 @@ fun GameCell(
         modifier = modifier
             .clickable(onClick = onClick)
             .animateContentSize(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 8.dp,
+            pressedElevation = 4.dp,
+            hoveredElevation = 12.dp
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isWinning) 
+                MaterialTheme.colorScheme.primaryContainer
+            else 
+                MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(
+            width = 2.dp,
+            color = if (isWinning)
+                MaterialTheme.colorScheme.primary
+            else
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+        )
     ) {
         Box(
             modifier = Modifier
@@ -399,15 +447,24 @@ fun GameCell(
                 .background(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            if (isWinning) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                            else MaterialTheme.colorScheme.surface,
-                            if (isWinning) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                            else MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+                            if (isWinning) 
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                            else 
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                            if (isWinning) 
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                            else 
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                         )
                     )
                 )
+                .padding(4.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
+            Canvas(modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+            ) {
                 when (value) {
                     "X" -> {
                         // Glowing X
@@ -463,31 +520,4 @@ fun GameCell(
             }
         }
     }
-}
-
-fun checkWinner(gameState: List<String>): Pair<String, List<Int>>? {
-    val winningCombinations = listOf(
-        // Rows
-        listOf(0, 1, 2),
-        listOf(3, 4, 5),
-        listOf(6, 7, 8),
-        // Columns
-        listOf(0, 3, 6),
-        listOf(1, 4, 7),
-        listOf(2, 5, 8),
-        // Diagonals
-        listOf(0, 4, 8),
-        listOf(2, 4, 6)
-    )
-
-    for (combination in winningCombinations) {
-        val (a, b, c) = combination
-        if (gameState[a].isNotEmpty() &&
-            gameState[a] == gameState[b] &&
-            gameState[a] == gameState[c]
-        ) {
-            return Pair(gameState[a], combination)
-        }
-    }
-    return null
 }
