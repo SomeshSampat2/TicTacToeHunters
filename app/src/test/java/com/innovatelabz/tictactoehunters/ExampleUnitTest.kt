@@ -1,4 +1,4 @@
-package com.example.tictactoehunters
+package com.innovatelabz.tictactoehunters
 
 import org.junit.Test
 
