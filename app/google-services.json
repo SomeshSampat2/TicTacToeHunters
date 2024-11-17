@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "78886059861",
+    "project_id": "tictactoehunters",
+    "storage_bucket": "tictactoehunters.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:78886059861:android:4bffadfdda2b1316d6f9dc",
+        "android_client_info": {
+          "package_name": "com.innovatelabs.tictactoehunters"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDpPJHvEvCuahdE05dKXjJnpBq7OTUdyn0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:78886059861:android:48cc4386c1a5b735d6f9dc",
+        "android_client_info": {
+          "package_name": "com.innovatelabz.tictactoehunters"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDpPJHvEvCuahdE05dKXjJnpBq7OTUdyn0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
