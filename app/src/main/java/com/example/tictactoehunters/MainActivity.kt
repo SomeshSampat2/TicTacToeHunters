@@ -31,10 +31,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.tictactoehunters.ui.theme.TictacToeHuntersTheme
 import android.app.Activity
+import kotlin.random.Random
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 enum class GameMode {
     TWO_PLAYER,
-    VS_COMPUTER
+    VS_COMPUTER_EASY,
+    VS_COMPUTER_MEDIUM,
+    VS_COMPUTER_HARD
 }
 
 enum class Screen {
@@ -113,6 +118,7 @@ fun GameApp() {
 @Composable
 fun MenuScreen(onStartGame: (Int, GameMode) -> Unit, onExitGame: () -> Unit) {
     var currentScreen by remember { mutableStateOf(Screen.MAIN_MENU) }
+    var showDifficultyDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -151,7 +157,7 @@ fun MenuScreen(onStartGame: (Int, GameMode) -> Unit, onExitGame: () -> Unit) {
                     modifier = Modifier
                         .width(280.dp)
                         .padding(vertical = 8.dp)
-                        .clickable { onStartGame(3, GameMode.VS_COMPUTER) },
+                        .clickable { showDifficultyDialog = true },
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
                 ) {
@@ -223,6 +229,160 @@ fun MenuScreen(onStartGame: (Int, GameMode) -> Unit, onExitGame: () -> Unit) {
             }
 
             else -> {}
+        }
+
+        if (showDifficultyDialog) {
+            AlertDialog(
+                onDismissRequest = { showDifficultyDialog = false },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                title = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Select Difficulty",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Divider(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                            thickness = 2.dp
+                        )
+                    }
+                },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Easy Mode Button
+                        Button(
+                            onClick = {
+                                onStartGame(3, GameMode.VS_COMPUTER_EASY)
+                                showDifficultyDialog = false
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(
+                                defaultElevation = 6.dp,
+                                pressedElevation = 8.dp
+                            )
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    "Easy",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    "Perfect for beginners",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+
+                        // Medium Mode Button
+                        Button(
+                            onClick = {
+                                onStartGame(3, GameMode.VS_COMPUTER_MEDIUM)
+                                showDifficultyDialog = false
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(
+                                defaultElevation = 6.dp,
+                                pressedElevation = 8.dp
+                            )
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    "Medium",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    "For experienced players",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+
+                        // Hard Mode Button
+                        Button(
+                            onClick = {
+                                onStartGame(3, GameMode.VS_COMPUTER_HARD)
+                                showDifficultyDialog = false
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(
+                                defaultElevation = 6.dp,
+                                pressedElevation = 8.dp
+                            )
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    "Hard",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    "Ultimate challenge",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
+                },
+                confirmButton = {},
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDifficultyDialog = false },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text(
+                            "Cancel",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 8.dp
+            )
         }
 
         // Exit button always visible at the bottom
@@ -314,66 +474,124 @@ fun GridSelectionScreen(onStartGame: (Int, GameMode) -> Unit, onBackToMenu: () -
     }
 }
 
+// Helper function to check for winner
+fun checkWinner(cells: List<String>, size: Int): List<Int>? {
+    // Check rows
+    for (i in 0 until size) {
+        val row = (0 until size).map { i * size + it }
+        if (row.all { cells[it] == "X" } || row.all { cells[it] == "O" }) {
+            return row
+        }
+    }
+
+    // Check columns
+    for (i in 0 until size) {
+        val column = (0 until size).map { it * size + i }
+        if (column.all { cells[it] == "X" } || column.all { cells[it] == "O" }) {
+            return column
+        }
+    }
+
+    // Check diagonals
+    val diagonal1 = (0 until size).map { it * size + it }
+    if (diagonal1.all { cells[it] == "X" } || diagonal1.all { cells[it] == "O" }) {
+        return diagonal1
+    }
+
+    val diagonal2 = (0 until size).map { it * size + (size - 1 - it) }
+    if (diagonal2.all { cells[it] == "X" } || diagonal2.all { cells[it] == "O" }) {
+        return diagonal2
+    }
+
+    return null
+}
+
+// Helper function to find winning move
+fun findWinningMove(cells: List<String>, player: String, size: Int): Int? {
+    for (i in cells.indices) {
+        if (cells[i].isEmpty()) {
+            val testBoard = cells.toMutableList()
+            testBoard[i] = player
+            if (checkWinner(testBoard, size) != null) {
+                return i
+            }
+        }
+    }
+    return null
+}
+
+fun minimax(
+    board: List<String>,
+    depth: Int,
+    isMaximizing: Boolean,
+    alpha: Int = Int.MIN_VALUE,
+    beta: Int = Int.MAX_VALUE
+): Int {
+    val winningResult = checkWinner(board, 3)
+    
+    when {
+        winningResult?.isNotEmpty() == true && board[winningResult[0]] == "O" -> return 10 - depth
+        winningResult?.isNotEmpty() == true && board[winningResult[0]] == "X" -> return depth - 10
+        board.none { it.isEmpty() } -> return 0
+    }
+
+    if (isMaximizing) {
+        var maxEval = Int.MIN_VALUE
+        var currentAlpha = alpha
+        for (i in board.indices) {
+            if (board[i].isEmpty()) {
+                val newBoard = board.toMutableList()
+                newBoard[i] = "O"
+                val eval = minimax(newBoard, depth + 1, false, currentAlpha, beta)
+                maxEval = maxOf(maxEval, eval)
+                currentAlpha = maxOf(currentAlpha, eval)
+                if (beta <= currentAlpha) break
+            }
+        }
+        return maxEval
+    } else {
+        var minEval = Int.MAX_VALUE
+        var currentBeta = beta
+        for (i in board.indices) {
+            if (board[i].isEmpty()) {
+                val newBoard = board.toMutableList()
+                newBoard[i] = "X"
+                val eval = minimax(newBoard, depth + 1, true, alpha, currentBeta)
+                minEval = minOf(minEval, eval)
+                currentBeta = minOf(currentBeta, eval)
+                if (currentBeta <= alpha) break
+            }
+        }
+        return minEval
+    }
+}
+
+// Function to get best move for hard difficulty
+fun getBestMove(board: List<String>): Int {
+    var bestScore = Int.MIN_VALUE
+    var bestMove = -1
+    var alpha = Int.MIN_VALUE
+    val beta = Int.MAX_VALUE
+
+    for (i in board.indices) {
+        if (board[i].isEmpty()) {
+            val newBoard = board.toMutableList()
+            newBoard[i] = "O"
+            val score = minimax(newBoard, 0, false, alpha, beta)
+            if (score > bestScore) {
+                bestScore = score
+                bestMove = i
+            }
+            alpha = maxOf(alpha, bestScore)
+        }
+    }
+    return bestMove
+}
+
 @Composable
 fun TicTacToeGame(gridSize: Int, gameMode: GameMode, onBackToMenu: () -> Unit) {
-    var gameState by remember { 
-        mutableStateOf(
-            GameState(
-                cells = List(gridSize * gridSize) { "" },
-                gameMode = gameMode
-            )
-        )
-    }
-    
-    val coroutineScope = rememberCoroutineScope()
-    
-    fun checkWinner(cells: List<String>, size: Int): List<Int>? {
-        // Check rows
-        for (i in 0 until size) {
-            val row = (0 until size).map { i * size + it }
-            if (row.all { cells[it] == "X" } || row.all { cells[it] == "O" }) {
-                return row
-            }
-        }
-
-        // Check columns
-        for (i in 0 until size) {
-            val column = (0 until size).map { it * size + i }
-            if (column.all { cells[it] == "X" } || column.all { cells[it] == "O" }) {
-                return column
-            }
-        }
-
-        // Check diagonals
-        val diagonal1 = (0 until size).map { it * size + it }
-        if (diagonal1.all { cells[it] == "X" } || diagonal1.all { cells[it] == "O" }) {
-            return diagonal1
-        }
-
-        val diagonal2 = (0 until size).map { it * size + (size - 1 - it) }
-        if (diagonal2.all { cells[it] == "X" } || diagonal2.all { cells[it] == "O" }) {
-            return diagonal2
-        }
-
-        return null
-    }
-
-    fun findWinningMove(cells: List<String>, player: String, size: Int): Int? {
-        cells.indices.forEach { index ->
-            if (cells[index].isEmpty()) {
-                val testCells = cells.toMutableList()
-                testCells[index] = player
-                if (checkWinner(testCells, size) != null) {
-                    return index
-                }
-            }
-        }
-        return null
-    }
-
-    fun isDraw(cells: List<String>): Boolean {
-        return cells.none { it.isEmpty() } && checkWinner(cells, gridSize) == null
-    }
+    var gameState by remember { mutableStateOf(GameState(cells = List(gridSize * gridSize) { "" }, gameMode = gameMode)) }
+    val scope = rememberCoroutineScope()
 
     // Break circular dependency with lateinit
     lateinit var makeComputerMove: () -> Unit
@@ -397,8 +615,15 @@ fun TicTacToeGame(gridSize: Int, gameMode: GameMode, onBackToMenu: () -> Unit) {
             )
 
             // Make computer move if it's computer's turn
-            if (gameMode == GameMode.VS_COMPUTER && !gameState.gameOver && gameState.currentPlayer == "O") {
-                makeComputerMove()
+            if ((gameMode == GameMode.VS_COMPUTER_EASY || 
+                 gameMode == GameMode.VS_COMPUTER_MEDIUM || 
+                 gameMode == GameMode.VS_COMPUTER_HARD) && 
+                !gameState.gameOver && 
+                gameState.currentPlayer == "O") {
+                scope.launch {
+                    delay(500) // Add slight delay for better UX
+                    makeComputerMove()
+                }
             }
         }
     }
@@ -406,36 +631,44 @@ fun TicTacToeGame(gridSize: Int, gameMode: GameMode, onBackToMenu: () -> Unit) {
     makeComputerMove = {
         if (!gameState.gameOver) {
             // First try to win
-            val winningMove = findWinningMove(gameState.cells, "O", gridSize)
-            // Then try to block player's winning move
-            val blockingMove = findWinningMove(gameState.cells, "X", gridSize)
-            
-            // Try to take center if available (for 3x3 grid)
-            val center = if (gridSize == 3 && gameState.cells[4].isEmpty()) 4 else null
-            
-            // Get all empty cells
             val emptyCells = gameState.cells.mapIndexedNotNull { index, cell ->
                 if (cell.isEmpty()) index else null
             }
 
-            // Make the best move available
-            val moveIndex = when {
-                winningMove != null -> winningMove
-                blockingMove != null -> blockingMove
-                center != null -> center
-                else -> emptyCells.randomOrNull()
-            }
-            
-            if (moveIndex != null) {
-                makeMove(moveIndex)
-            }
-            
-            // Check for draw after computer's move
-            if (isDraw(gameState.cells)) {
-                gameState = gameState.copy(
-                    gameOver = true,
-                    winner = "Draw"
-                )
+            if (emptyCells.isNotEmpty()) {
+                val moveIndex = when (gameState.gameMode) {
+                    GameMode.VS_COMPUTER_EASY -> {
+                        // Easy: 20% optimal move, 80% random
+                        if (Random.nextFloat() < 0.2f) {
+                            val winningMove = findWinningMove(gameState.cells, "O", gridSize)
+                            winningMove ?: emptyCells.random()
+                        } else {
+                            emptyCells.random()
+                        }
+                    }
+                    GameMode.VS_COMPUTER_MEDIUM -> {
+                        // Medium: Try to win, block, or make strategic move
+                        val winningMove = findWinningMove(gameState.cells, "O", gridSize)
+                        val blockingMove = findWinningMove(gameState.cells, "X", gridSize)
+                        val center = if (gridSize == 3 && gameState.cells[4].isEmpty()) 4 else null
+                        
+                        when {
+                            winningMove != null -> winningMove
+                            Random.nextFloat() < 0.7f && blockingMove != null -> blockingMove
+                            center != null -> center
+                            else -> emptyCells.random()
+                        }
+                    }
+                    GameMode.VS_COMPUTER_HARD -> {
+                        // Hard: Use minimax algorithm
+                        getBestMove(gameState.cells)
+                    }
+                    else -> emptyCells.random()
+                }
+
+                if (moveIndex != -1) {
+                    makeMove(moveIndex)
+                }
             }
         }
     }
